@@ -1,0 +1,155 @@
+{% extends "base/layout.html" %}
+{% block title %}Dashboard — PulseDir{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Your team at a glance{% endblock %}
+
+{% block header_actions %}
+{% if request.user.is_admin_user %}
+<a href="{% url 'import_csv' %}" class="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-50">
+  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+  Import CSV
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Stat Row -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+    <div class="w-11 h-11 bg-indigo-50 rounded-xl flex items-center justify-center flex-shrink-0">
+      <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    </div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_employees }}</p><p class="text-xs text-gray-400 font-medium">Active Employees</p></div>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+    <div class="w-11 h-11 bg-violet-50 rounded-xl flex items-center justify-center flex-shrink-0">
+      <svg class="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16"/></svg>
+    </div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ total_departments }}</p><p class="text-xs text-gray-400 font-medium">Departments</p></div>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+    <div class="w-11 h-11 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0">
+      <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    </div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ this_month }}</p><p class="text-xs text-gray-400 font-medium">Added This Month</p></div>
+  </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+    <div class="w-11 h-11 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0">
+      <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    </div>
+    <div><p class="text-2xl font-bold text-gray-900">{{ last_month }}</p><p class="text-xs text-gray-400 font-medium">Added Last Month</p></div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Dept bar chart -->
+  <div class="lg:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <h2 class="text-sm font-bold text-gray-900 mb-4">By Department</h2>
+    {% if dept_stats %}
+    <div class="space-y-3">
+      {% for dept in dept_stats %}{% if dept.count > 0 %}
+      <div>
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-xs font-medium text-gray-700 truncate max-w-32">{{ dept.name }}</span>
+          <span class="text-xs font-bold text-gray-500 ml-2">{{ dept.count }}</span>
+        </div>
+        <div class="h-2 bg-gray-100 rounded-full overflow-hidden">
+          {% if total_employees > 0 %}
+          <div class="h-full bg-indigo-500 rounded-full transition-all" style="width: {% widthratio dept.count total_employees 100 %}%"></div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-10 text-center">
+      <p class="text-sm text-gray-400">No departments yet.</p>
+      <a href="{% url 'department_list' %}" class="mt-2 text-xs text-indigo-600 hover:underline">Create one →</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Recently Added -->
+  <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-sm font-bold text-gray-900">Recently Added</h2>
+      <a href="{% url 'directory' %}" class="text-xs text-indigo-600 hover:text-indigo-700 font-semibold">View All →</a>
+    </div>
+    {% if recent_employees %}
+    <div class="space-y-2">
+      {% for emp in recent_employees %}
+      <a href="{% url 'employee_detail' emp.pk %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
+        {% if emp.profile_picture %}<img src="{{ emp.profile_picture.url }}" class="w-10 h-10 rounded-xl object-cover flex-shrink-0">
+        {% else %}<div class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-sm font-bold text-indigo-700 flex-shrink-0">{{ emp.get_initials }}</div>{% endif %}
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-gray-800 group-hover:text-indigo-600 transition-colors">{{ emp.name }}</p>
+          <p class="text-xs text-gray-400">{{ emp.position }}{% if emp.department %} · {{ emp.department.name }}{% endif %}</p>
+        </div>
+        <span class="text-xs text-gray-300 flex-shrink-0">{{ emp.created_at|timesince }} ago</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-10 text-center">
+      <p class="text-sm text-gray-400 mb-3">No employees yet.</p>
+      {% if request.user.is_admin_user %}<a href="{% url 'employee_create' %}" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-500 transition-colors">Add First Employee</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Skills + Needs Attention -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+  <!-- Top Skills -->
+  <div class="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <h2 class="text-sm font-bold text-gray-900 mb-4">Top Skills Across Team</h2>
+    {% if top_skills %}
+    <div class="flex flex-wrap gap-2">
+      {% for skill in top_skills %}
+      <a href="{% url 'directory' %}?q={{ skill.name }}"
+         class="px-3 py-1.5 rounded-xl font-medium hover:bg-indigo-100 transition-colors {% if forloop.counter <= 2 %}bg-indigo-600 text-white text-sm{% elif forloop.counter <= 5 %}bg-indigo-100 text-indigo-700 text-sm{% else %}bg-gray-100 text-gray-600 text-xs{% endif %}">
+        {{ skill.name }} <span class="opacity-60 text-xs">{{ skill.count }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-400">No skills added yet. <a href="{% url 'employee_create' %}" class="text-indigo-600 hover:underline">Add an employee with skills →</a></p>
+    {% endif %}
+  </div>
+
+  <!-- Needs Attention (admin only) -->
+  {% if request.user.is_admin_user %}
+  <div class="bg-white rounded-2xl border border-amber-100 shadow-sm p-6">
+    <h2 class="text-sm font-bold text-gray-900 mb-1">Needs Attention</h2>
+    <p class="text-xs text-gray-400 mb-4">Incomplete profiles</p>
+    {% if no_skills == 0 and no_photo == 0 and no_phone == 0 %}
+    <div class="flex flex-col items-center justify-center py-6 text-center">
+      <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center mb-2">
+        <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <p class="text-sm text-gray-500 font-medium">All profiles complete!</p>
+    </div>
+    {% else %}
+    <div class="space-y-3">
+      {% if no_skills > 0 %}
+      <a href="{% url 'directory' %}" class="flex items-center justify-between p-3 rounded-xl bg-amber-50 hover:bg-amber-100 transition-colors">
+        <div><p class="text-xs font-semibold text-amber-800">No Skills Listed</p><p class="text-xs text-amber-600">{{ no_skills }} employee{{ no_skills|pluralize }}</p></div>
+        <svg class="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </a>
+      {% endif %}
+      {% if no_photo > 0 %}
+      <div class="flex items-center justify-between p-3 rounded-xl bg-blue-50">
+        <div><p class="text-xs font-semibold text-blue-800">No Profile Photo</p><p class="text-xs text-blue-600">{{ no_photo }} employee{{ no_photo|pluralize }}</p></div>
+      </div>
+      {% endif %}
+      {% if no_phone > 0 %}
+      <div class="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+        <div><p class="text-xs font-semibold text-gray-700">No Phone Number</p><p class="text-xs text-gray-500">{{ no_phone }} employee{{ no_phone|pluralize }}</p></div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

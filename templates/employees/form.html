@@ -1,0 +1,141 @@
+{% extends "base/layout.html" %}
+{% block title %}{{ action }} Employee — PulseDir{% endblock %}
+{% block page_title %}{{ action }} {% if employee %}{{ employee.name }}{% else %}Employee{% endif %}{% endblock %}
+{% block page_subtitle %}{% if self_edit %}Editing your own profile{% elif action == 'Edit' %}Updating {{ employee.name }}{% else %}Add a new team member{% endif %}{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'directory' %}" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">← Cancel</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl">
+  <form id="empForm" method="post" enctype="multipart/form-data" class="space-y-5">
+    {% csrf_token %}
+
+    {% if not self_edit %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Basic Information</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.name.label }}</label>
+          {{ form.name }}
+          {% for err in form.name.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.email.label }}</label>
+          {{ form.email }}
+          {% for err in form.email.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.phone.label }}</label>
+          {{ form.phone }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.position.label }}</label>
+          {{ form.position }}
+          {% for err in form.position.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.department.label }}</label>
+          {{ form.department }}
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.joined_date.label }}</label>
+          {{ form.joined_date }}
+        </div>
+      </div>
+      <div class="flex items-center gap-3 pt-1">
+        {{ form.is_active }}
+        <label class="text-sm font-medium text-gray-700">Active Employee</label>
+      </div>
+    </div>
+    {% else %}
+    <div class="bg-gray-50 rounded-2xl border border-gray-200 p-6 space-y-3">
+      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Your Info <span class="normal-case font-normal text-gray-400">(contact admin to change)</span></h3>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div><p class="text-xs text-gray-400">Name</p><p class="font-semibold text-gray-700">{{ employee.name }}</p></div>
+        <div><p class="text-xs text-gray-400">Position</p><p class="font-semibold text-gray-700">{{ employee.position }}</p></div>
+        <div><p class="text-xs text-gray-400">Email</p><p class="font-semibold text-gray-700">{{ employee.email }}</p></div>
+        <div><p class="text-xs text-gray-400">Department</p><p class="font-semibold text-gray-700">{{ employee.department|default:"—" }}</p></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Skills & Bio</h3>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.skills_input.label }}</label>
+        {{ form.skills_input }}
+        {% for err in form.skills_input.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+        <p class="text-xs text-gray-400 mt-1">e.g. Python, Leadership, React, SQL</p>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-600 mb-1.5">{{ form.bio.label }}</label>
+        {{ form.bio }}
+        {% for err in form.bio.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-3">
+      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Profile Photo</h3>
+      {% if employee.profile_picture %}
+      <img id="photoPreview" src="{{ employee.profile_picture.url }}" class="w-16 h-16 rounded-xl object-cover" alt="Current">
+      {% else %}
+      <img id="photoPreview" src="" class="w-16 h-16 rounded-xl object-cover hidden" alt="Preview">
+      {% endif %}
+      {{ form.profile_picture }}
+      {% for err in form.profile_picture.errors %}<p class="text-red-500 text-xs mt-1">{{ err }}</p>{% endfor %}
+      <p class="text-xs text-gray-400">Max 2MB · JPEG, PNG, or WEBP</p>
+    </div>
+
+    {% if form.create_login %}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Login Access</h3>
+      <div class="flex items-start gap-3">
+        {{ form.create_login }}
+        <div>
+          <label for="id_create_login" class="text-sm font-medium text-gray-700 cursor-pointer">Create login account for this employee</label>
+          <p class="text-xs text-gray-400 mt-0.5">Username + temporary password will be shown after saving.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if form.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+      {% for err in form.non_field_errors %}<p>{{ err }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="flex gap-3">
+      <button type="submit" id="submitBtn" class="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-500 transition-colors flex items-center gap-2">
+        <span id="submitText">{% if action == 'Edit' %}Save Changes{% else %}Add Employee{% endif %}</span>
+        <span id="submitSpinner" class="hidden" style="width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .7s linear infinite;"></span>
+      </button>
+      <a href="{% url 'directory' %}" class="px-6 py-2.5 bg-gray-100 text-gray-600 rounded-xl text-sm font-semibold hover:bg-gray-200 transition-colors">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+document.querySelector('input[type="file"]')?.addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const preview = document.getElementById('photoPreview');
+  const reader = new FileReader();
+  reader.onload = ev => { preview.src = ev.target.result; preview.classList.remove('hidden'); };
+  reader.readAsDataURL(file);
+});
+document.getElementById('empForm').addEventListener('submit', function() {
+  document.getElementById('submitBtn').disabled = true;
+  document.getElementById('submitText').textContent = 'Saving…';
+  document.getElementById('submitSpinner').classList.remove('hidden');
+});
+let formDirty = false;
+document.querySelectorAll('#empForm input, #empForm textarea, #empForm select').forEach(el => {
+  el.addEventListener('change', () => formDirty = true);
+  el.addEventListener('input', () => formDirty = true);
+});
+document.getElementById('empForm').addEventListener('submit', () => formDirty = false);
+window.addEventListener('beforeunload', e => { if (formDirty) { e.preventDefault(); e.returnValue = ''; } });
+</script>
+{% endblock %}
